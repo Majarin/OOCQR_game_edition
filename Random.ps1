@@ -1,39 +1,50 @@
 ﻿Add-Type -AssemblyName System.Speech
 $SpeechSynth = New-Object System.Speech.Synthesis.SpeechSynthesizer
-#$Path = "C:\Users\TomRuneWakaValen\Desktop\PowerShell Scripts\Out Of Context Ououts reader and fixer\Semi Filterd text.txt"       #This is for me
 
-$Path = ".\Semi Filterd text.txt"       #this is for frinds
+# $Path = "C:\Users\TomRuneWakaValen\Desktop\PowerShell Scripts\Out Of Context Ououts reader and fixer\Semi Filterd text.txt"
+$Path = ".\Semi Filterd text.txt"
+
 $lines = Get-Content -Path $Path
-for ($i = 1; $i -lt $lines.Count; $i++)
-{
-    $Safe = 2
+
+Write-Host "Working"
+Write-Host $lines.Count
+
+for ($i = 1; $i -lt $lines.Count; $i++) {
+    Write-Host $i
+    # Detect a line containing a quote
     $Random = Get-Random -Maximum $lines.Count
     $line = $lines[$Random]
-    if(
-    $line -like  '*"*' -or
-    $line -like  '*“*' -or
-    $line -like  '*«*'
-    )
+    if ($line -match '"([^"]+)"\s*-(.+)$')
     {
-        do
+        $quoteText = $matches[1].Trim()
+        $quotedName = $matches[2].Trim()
+
+        # sets the corect pronunes becuse why not
+        if ($quoter -eq "Magathi" -or "Ginger" -or "Natasha") {$pronune = "She was"}
+        if ($quoter -eq "Oscar" -or "Ben" -or "Chad") {$pronune = "He was"}
+        if ($quoter -eq "Jupiter") {$pronune = "They were"}
+        if ($quoter -eq "Imre") {$pronune = "God was"}
+
+        # Grab name and date/time from previous lines (if present)
+        $quoter = $lines[$Random - 3]
+        $date = $lines[$Random - 1]
+        # Speak the quote info
+        Write-Host "$quoter, on $date, quoted:"
+        Write-Host @quoteText
+        $SpeechSynth.Speak("$quoter, on $date, said:")
+        $SpeechSynth.Speak($quoteText)
+        Write-Host ""
+        Write-Host "Press SPACE to hear who they were quoting..." -ForegroundColor Yellow
+
+        # Wait for spacebar
+        do 
         {
-            Write-Output "Well Fuck"
-            $Safe = $Safe + 1
-            $speak = $lines[$Random - $Safe]
-        }While (
-        $speak -like '*«*' -or
-        $speak -like '*“*' -or
-        $speak -like '*"*' -or
-        $speak -like " " -or
-        $speak -eq "" -or
-        $speak -match '^\d{1,2}/\d{1,2}/\d{4}' -or
-        $speak -match '^\d{1,2}:\d{2}' -or
-        $speak -match 'at \d{1,2}:\d{2} (AM|PM)'
-        )
-        $speak = $lines[$Random - $Safe]
-        $Quote = "$speak quoted: $line"
-        Write-Output $line
-        Write-Output $speak
-        $SpeechSynth.Speak($Quote)
+            $key = [System.Console]::ReadKey($true)
+        } until ($key.Key -eq 'Spacebar')
+
+        # Speak quoted person
+        Write-Host "They were quoting $quotedName"
+        $SpeechSynth.Speak("$pronune quoting $quotedName")
+        Write-Host ""
     }
 }
